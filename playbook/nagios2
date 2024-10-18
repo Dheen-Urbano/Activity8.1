@@ -1,0 +1,23 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  
+  - name: Installation of needed dependecies
+    package: 
+      name:
+        - wget
+      state: present
+      update_cache: yes
+ 
+
+  - name: Create Nagios group
+    group:
+      name: nagcm
+      state: present
+ 
+  - name: Create Nagios User  
+    user: 
+      name: nagcm
+      state: present
+      groups: nagcmd

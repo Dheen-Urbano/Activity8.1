@@ -1,0 +1,105 @@
+---
+- name: Install Nagios on Ubuntu
+  hosts: nagios
+  become: yes
+  tasks:
+
+    - name: Update APT repository
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        pkg:
+          - apache2
+          - libapache2-mod-php
+          - php
+          - php-gd
+          - php-xml
+          - php-cli
+          - php-mysql
+          - gcc
+          - make
+          - unzip
+          - autoconf
+          - libgd-dev
+        state: present
+
+    - name: Create Nagios user
+      user:
+        name: nagios
+        shell: /bin/bash
+        system: yes
+        create_home: no
+
+    - name: Create Nagios group
+      group:
+        name: nagios
+        system: yes
+
+    - name: Create Nagios web user
+      command: htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin nagiospassword
+      args:
+        creates: /usr/local/nagios/etc/htpasswd.users
+
+    - name: Download Nagios
+      get_url:
+        url: https://github.com/NagiosEnterprises/nagioscore/archive/refs/tags/nagios-4.4.6.tar.gz
+        dest: /tmp/nagios.tar.gz
+
+    - name: Extract Nagios
+      unarchive:
+        src: /tmp/nagios.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile and install Nagios
+      command: ./configure --with-command-group=nagios
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Make Nagios
+      command: make all
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Install Nagios
+      command: make install
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Install Nagios CGI
+      command: make install-cgi
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Install init script
+      command: make install-init
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Install config files
+      command: make install-config
+      args:
+        chdir: /tmp/nagioscore-nagios-4.4.6
+
+    - name: Install plugins
+      command: make install
+      args:
+        chdir: /tmp/nagios-plugins-2.3.3
+
+    - name: Start Nagios service
+      service:
+        name: nagios
+        state: started
+        enabled: yes
+
+    - name: Enable Apache CGI module
+      command: a2enmod cgi
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted

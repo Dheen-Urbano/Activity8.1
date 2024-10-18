@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install needed tools for ubuntu
+    apt:
+      - autoconf
+      - gcc
+      - libc6
+      - make
+      - wget
+      - unzip
+      - apache2
+      - apache2-utils
+      - php
+      - libgd-dev
+      - libmcrypt-dev
+      - libssl-dev
+      - bc
+      - gawk
+      - dc
+      - build-essentials
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
